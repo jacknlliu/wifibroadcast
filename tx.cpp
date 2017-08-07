@@ -31,6 +31,8 @@
 #include <string>
 #include <memory>
 
+#include <unistd.h>
+
 extern "C"
 {
 #include "fec.h"
@@ -200,9 +202,20 @@ void normal_rx(Transmitter *t, int fd)
 {
     uint8_t buf[MAX_PAYLOAD_SIZE];
     uint64_t session_key_announce_ts = 0;
+    static int count =0;
     for(;;)
     {
-        ssize_t rsize = recv(fd, buf, sizeof(buf), 0);
+        // ssize_t rsize = recv(fd, buf, sizeof(buf), 0);
+        usleep(500);
+        ssize_t rsize = 10; // default receive 100 bytes
+
+        count=(count+1)%2;
+
+        for (size_t i = 0; i < rsize; i++)
+        {
+            buf[i] = count*2;
+        }
+
         if (rsize < 0) throw runtime_error(string_format("Error receiving packet: %s", strerror(errno)));
         uint64_t cur_ts = get_system_time();
         if (cur_ts >= session_key_announce_ts)
@@ -212,6 +225,13 @@ void normal_rx(Transmitter *t, int fd)
             session_key_announce_ts = cur_ts + SESSION_KEY_ANNOUNCE_MSEC;
         }
         t->send_packet(buf, rsize);
+
+        printf("send buf:");
+        for (size_t i = 0; i < rsize; i++)
+        {
+            printf("%d ", buf[i]);
+        }
+        printf("\n");
     }
 }
 
@@ -344,15 +364,16 @@ int main(int argc, char * const *argv)
 
     try
     {
-        int fd = open_udp_socket_for_rx(udp_port);
+        // int fd = open_udp_socket_for_rx(udp_port);
         shared_ptr<Transmitter>t = shared_ptr<PcapTransmitter>(new PcapTransmitter(k, n, keypair, radio_port, argv[optind]));
         //shared_ptr<Transmitter>t = shared_ptr<UdpTransmitter>(new UdpTransmitter(k, n, keypair, "127.0.0.1", 5601));
 
         if (mavlink_mode)
         {
-            mavlink_rx(t.get(), fd, mavlink_agg_latency);
+            // mavlink_rx(t.get(), fd, mavlink_agg_latency);
         }else
         {
+            int fd = 1;
             normal_rx(t.get(), fd);
         }
     }catch(runtime_error &e)

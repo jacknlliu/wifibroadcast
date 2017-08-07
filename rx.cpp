@@ -248,7 +248,13 @@ RemoteAggregator::RemoteAggregator(const string &client_addr, int client_port)
 
 void RemoteAggregator::process_packet(const uint8_t *buf, size_t size)
 {
-    send(sockfd, buf, size, 0);
+    // send(sockfd, buf, size, 0);
+    printf("receive package: ");
+    for (size_t i = 0; i < size; i++)
+    {
+        printf("%d ", buf[i]);
+    }
+    printf("\n");
 }
 
 
@@ -456,7 +462,14 @@ void LocalAggregator::send_packet(int ring_idx, int fragment_idx)
     {
         fprintf(stderr, "corrupted packet %u\n", seq);
     }else{
-        send(sockfd, payload, packet_hdr->packet_size, 0);
+        // send(sockfd, payload, packet_hdr->packet_size, 0);
+    printf("receive package: ");
+    for (size_t i = 0; i < packet_hdr->packet_size; i++)
+    {
+        printf("%d ", payload[i]);
+    }
+    printf("\n");
+
     }
 }
 
